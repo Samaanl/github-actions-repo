@@ -1,0 +1,55 @@
+# =============================================================================
+#  PR GREETER  -  the "hello world" workflow
+# =============================================================================
+#  Show this FIRST in the presentation. It is 20 lines, it has no build tools,
+#  no dependencies, and it makes the mechanism obvious:
+#
+#      an event happens  ->  GitHub starts a runner  ->  the runner runs steps
+#
+#  It also demonstrates two things people ask about immediately:
+#    - reading context data (github.*) inside a workflow
+#    - writing back to GitHub (posting a comment) using the built-in token
+# =============================================================================
+
+name: PR Greeter
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write # needed to post a comment
+
+jobs:
+  greet:
+    name: Say hello
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print the context we were given
+        run: |
+          echo "Event      : ${{ github.event_name }}"
+          echo "Repository : ${{ github.repository }}"
+          echo "PR number  : ${{ github.event.number }}"
+          echo "Author     : ${{ github.actor }}"
+          echo "Branch     : ${{ github.head_ref }} -> ${{ github.base_ref }}"
+          echo "Runner OS  : ${{ runner.os }}"
+
+      - name: Comment on the pull request
+        env:
+          # `gh` needs a token and a target repo. Both come from the run itself,
+          # so there is nothing to configure and no secret to manage.
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          printf '%s\n' \
+            "Thanks for the pull request, @${{ github.actor }}!" \
+            "" \
+            "The CI pipeline is now running:" \
+            "- ESLint" \
+            "- Unit tests on Node 18, 20 and 22 across Ubuntu and Windows" \
+            "- Production build" \
+            "" \
+            "_Posted automatically by a GitHub Actions workflow._" > comment.md
+          gh pr comment "${{ github.event.number }}" --body-file comment.md

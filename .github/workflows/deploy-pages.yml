@@ -1,0 +1,97 @@
+# =============================================================================
+#  CD  -  Continuous Deployment to GitHub Pages
+# =============================================================================
+#  This is the "CD" half. It runs ONLY after CI has fully passed on `main`,
+#  then publishes dist/ to a public URL:
+#
+#      https://<your-username>.github.io/<repo-name>/
+#
+#  It uses OIDC (id-token) instead of a long-lived deploy key or password -
+#  that is the modern, credential-free way to deploy from Actions.
+#
+#  ONE-TIME SETUP (do this before the demo):
+#      Repo → Settings → Pages → Build and deployment → Source: "GitHub Actions"
+# =============================================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  # workflow_run chains this workflow AFTER the CI workflow finishes.
+  # This is how you express "deploy only what already passed the tests".
+  workflow_run:
+    workflows: ['CI']
+    branches: [main]
+    types: [completed]
+  workflow_dispatch: # manual "deploy now" button for the live demo
+
+permissions:
+  contents: read
+  pages: write # required to publish to Pages
+  id-token: write # required for the OIDC handshake
+
+# Never let two deployments write to the same site at the same time.
+# `cancel-in-progress: false` = let a running deploy finish, queue the next one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+
+    # Skip the deploy if CI failed. Without this guard, workflow_run fires on
+    # completion regardless of outcome - including failures.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    # `environment` gives you the deployment history, the live URL badge on the
+    # repo home page, and (on protected environments) manual approval gates.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Announce URL
+        run: |
+          {
+            echo "## Deployed"
+            echo ""
+            echo "Live URL: ${{ steps.deployment.outputs.page_url }}"
+            echo ""
+            echo "Commit \`${GITHUB_SHA:0:7}\` is now serving in production."
+          } >> "$GITHUB_STEP_SUMMARY"
