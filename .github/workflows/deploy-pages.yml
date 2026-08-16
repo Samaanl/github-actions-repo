@@ -62,8 +62,18 @@ jobs:
       - name: Build
         run: npm run build
 
+      # `enablement: true` makes this action turn Pages on via the API if the
+      # repository does not have it enabled yet, instead of failing with
+      # "Get Pages site failed ... Not Found". It needs `pages: write`, which
+      # this workflow already grants above.
+      #
+      # Doing it in Settings -> Pages -> Source: "GitHub Actions" is still the
+      # normal way; this is a safety net so a fresh clone of this repo deploys
+      # without a manual step.
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
