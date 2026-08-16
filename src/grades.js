@@ -18,7 +18,7 @@ export const GRADE_SCALE = [
 ];
 
 /** Minimum marks required to clear a subject. */
-export const PASS_MARK = 40;
+export const PASS_MARK = 30;
 
 /**
  * Throws a descriptive error if `marks` is not a number in [0, 100].
