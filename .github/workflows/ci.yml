@@ -76,8 +76,14 @@ jobs:
   # ===========================================================================
   #  JOB 2 - TEST (MATRIX)
   #  One job definition expands into 6 parallel jobs:
-  #  {ubuntu, windows} x {Node 18, 20, 22}. This is what proves the app works
+  #  {ubuntu, windows} x {Node 20, 22, 24}. This is what proves the app works
   #  on more than "it works on my machine".
+  #
+  #  NOTE: `npm test` runs plain `node --test` with no path argument, so Node
+  #  auto-discovers **/*.test.js. That is deliberate - glob arguments such as
+  #  `node --test "test/**/*.test.js"` are only supported on Node 22+, so a
+  #  glob here would fail on the older rows of this very matrix. Which is
+  #  exactly the class of bug a matrix exists to catch.
   # ===========================================================================
   test:
     name: Test · Node ${{ matrix.node }} · ${{ matrix.os }}
@@ -89,7 +95,7 @@ jobs:
       fail-fast: false # let all 6 finish so we see the full picture
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: [18, 20, 22]
+        node: [20, 22, 24]
 
     steps:
       - name: Check out repository
@@ -109,13 +115,14 @@ jobs:
 
       # Only collect coverage once (on the "primary" combination) instead of
       # 6 times - the other 5 runs exist to check portability, not coverage.
+      # Node 22 specifically: the lcov test reporter was added in Node 22.
       - name: Run tests with coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.node == 20
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
         run: npm run test:coverage
 
       # Artifacts let a later job (or a human) download files a job produced.
       - name: Upload coverage report
-        if: matrix.os == 'ubuntu-latest' && matrix.node == 20
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report

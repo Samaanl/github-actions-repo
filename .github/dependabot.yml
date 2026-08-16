@@ -5,19 +5,26 @@
 # secure thing to do) becomes a manual maintenance burden and people stop doing
 # it. Dependabot is what makes the secure option sustainable.
 
+# Monthly, not weekly, and capped at 2 open PRs at a time. Dependabot opens a
+# pull request per outdated dependency the moment you enable it, and each one
+# triggers a full CI run - which is great in a real project and terrible three
+# days before a presentation, when the Actions tab is meant to show a clean
+# column of green ticks.
+
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2
     commit-message:
       prefix: 'deps'
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
     commit-message:
       prefix: 'ci'
