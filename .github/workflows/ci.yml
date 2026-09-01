@@ -59,7 +59,7 @@ jobs:
       # actions/checkout clones the repo into the runner. Without it the
       # runner is an empty machine - it does NOT have your code by default.
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -99,7 +99,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js ${{ matrix.node }}
         uses: actions/setup-node@v4
@@ -159,7 +159,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
